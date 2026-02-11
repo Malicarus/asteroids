@@ -1,11 +1,13 @@
 import pygame
-from constants import PLAYER_RADIUS, LINE_WIDTH, PLAYER_TURN_SPEED, PLAYER_SPEED
+from constants import PLAYER_RADIUS, LINE_WIDTH, PLAYER_TURN_SPEED, PLAYER_SPEED, PLAYER_SHOOT_SPEED, PLAYER_SHOOT_COOLDOWN_SECONDS
 from circleshape import CircleShape
+from shot import Shot
 
 class Player(CircleShape):
     def __init__(self, x, y):
         super().__init__(x, y, PLAYER_RADIUS)
         self.rotation = 0
+        self.cooldown = 0
 
     # in the Player class
     def triangle(self):
@@ -22,8 +24,16 @@ class Player(CircleShape):
     def draw(self, screen):
         pygame.draw.polygon(screen, "white", self.triangle(), LINE_WIDTH)
 
+    def shoot(self):
+        bullet = Shot(self.position[0], self.position[1], self.radius)
+        vect = pygame.Vector2(0, 1)
+        rotated_vect = vect.rotate(self.rotation)
+        accelerate_bullet = rotated_vect * PLAYER_SHOOT_SPEED
+        bullet.velocity += accelerate_bullet
+        
     def update(self, dt):
         keys = pygame.key.get_pressed()
+        self.cooldown -= dt
 
         if keys[pygame.K_a]:
             self.rotate(-abs(dt))
@@ -36,6 +46,12 @@ class Player(CircleShape):
         
         if keys[pygame.K_s]:
             self.move(-abs(dt))
+
+        if keys[pygame.K_SPACE]:
+            if self.cooldown > 0:
+                return
+            self.shoot()
+            self.cooldown = PLAYER_SHOOT_COOLDOWN_SECONDS
     
     def move(self, dt):
         unit_vector = pygame.Vector2(0, 1)
